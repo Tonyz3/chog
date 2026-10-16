@@ -16,9 +16,9 @@ A small, browser based Chog PFP remix demo built for a competition walkthrough. 
 
 ## Screenshots
 
-Add judge-facing screenshots here after running the app. Suggested files: `docs/screenshots/studio.png`, `docs/screenshots/gallery.png`, and `docs/screenshots/mobile.png`.
+Replace this designed placeholder with a judge-facing studio capture after running the app. Suggested follow-up files: `docs/screenshots/gallery.png` and `docs/screenshots/mobile.png`.
 
-![Studio screenshot placeholder](docs/screenshots/studio.png)
+![Studio screenshot placeholder](docs/screenshots/studio-placeholder.svg)
 
 ## Architecture
 
