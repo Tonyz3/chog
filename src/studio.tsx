@@ -14,7 +14,7 @@ const demoGallery: Remix[] = [
 
 function Chog({ remix, id }: { remix: Remix; id: string }) {
   const eyes = remix.eyes === 'star' ? <><path d="M39 53l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8zM78 53l2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8z" fill="#252a21"/></> : remix.eyes === 'sleepy' ? <><path d="M34 61q7 8 14 0M73 61q7 8 14 0" fill="none" stroke="#252a21" strokeWidth="4" strokeLinecap="round"/></> : <><ellipse cx="42" cy="61" rx="4" ry="6" fill="#252a21"/><ellipse cx="80" cy="61" rx="4" ry="6" fill="#252a21"/></>
-  return <svg id={id} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Your Chog remix preview">
+  return <svg id={id} width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Your Chog remix preview">
     <defs><clipPath id={`clip-${id}`}><rect width="120" height="120" rx="20"/></clipPath></defs>
     <g clipPath={`url(#clip-${id})`}><rect width="120" height="120" fill={remix.bg}/><circle cx="94" cy="25" r="13" fill="#ffffff" opacity=".26"/><path d="M0 102Q34 79 67 101T130 96V130H0Z" fill="#ffffff" opacity=".22"/>
       <path d="M35 37 25 16q-2-8 6-4l19 14M76 27 91 12q7-4 7 4l-4 25" fill={remix.fur} stroke="#26382a" strokeWidth="2.5" strokeLinejoin="round"/>
@@ -42,8 +42,17 @@ export default function App() {
   const generate = () => {
     if (credits < 1) { setNotice('You are out of demo credits. Simulate a demo burn to add five.'); return }
     setCredits(value => value - 1)
-    const item = { ...remix, id: Date.now() }
-    setRemix(item); setSaved(current => [item, ...current]); setNotice('Remix generated and saved in this browser.')
+    const dimensions: Array<{ key: 'bg'|'fur'|'eyes'|'accessory'; values: string[] }> = [
+      { key: 'bg', values: backgrounds.map(option => option.value) },
+      { key: 'fur', values: furs.map(option => option.value) },
+      { key: 'eyes', values: ['round','star','sleepy'] },
+      { key: 'accessory', values: ['none','cap','flower'] },
+    ]
+    const dimension = dimensions[Math.floor(Math.random() * dimensions.length)]
+    const alternatives = dimension.values.filter(value => value !== remix[dimension.key])
+    const varied = { ...remix, [dimension.key]: alternatives[Math.floor(Math.random() * alternatives.length)] }
+    const item = { ...varied, id: Date.now() }
+    setRemix(item); setSaved(current => [item, ...current]); setNotice('A new variation was generated and added to this session’s remix shelf.')
   }
   const burnDemo = () => { setCredits(value => value + 5); setNotice('DEMO ONLY · Simulated burn added five demo credits. No wallet or NFT was used.') }
   const download = async () => {
@@ -68,7 +77,7 @@ export default function App() {
     <section className="hero" id="top"><div><p className="eyebrow"><span/> CHOG REMIX STUDIO</p><h1>Your Chog.<br/><em>Your world.</em></h1><p className="hero-copy">A little remix magic. Mix a mood, make it yours, and give your profile a new look.</p><div className="hero-actions"><button className="primary" onClick={()=>{setTab('studio');document.getElementById('workbench')?.scrollIntoView({behavior:'smooth'})}}>Open the studio <span>↗</span></button><div className="credit-chip"><span className="credit-icon">✳</span><div><strong>{credits} credits</strong><small>demo balance</small></div></div></div></div>
       <div className="hero-art"><div className="art-shadow"/><div className="art-frame"><Chog remix={remix} id="hero-chog"/></div><span className="sticker sticker-top">100% chog energy</span><span className="sticker sticker-bottom">✳ made by you</span><span className="sparkle">✳</span></div></section>
     <section className="how"><div className="section-kicker">MADE FOR MAKING</div><div className="how-grid"><div><b>01</b><strong>Pick your palette</strong><span>Choose colors and little details.</span></div><div><b>02</b><strong>Make a remix</strong><span>Every new version gets its own vibe.</span></div><div><b>03</b><strong>Take it with you</strong><span>Export a crisp PNG for your profile.</span></div></div></section>
-    <section className="workbench" id="workbench"><div className="work-title"><div><div className="section-kicker">THE PLAYGROUND</div><h2>{tab==='studio'?'Build your chog':'The remix shelf'}</h2></div><span className="autosave">● &nbsp;SAVED IN THIS BROWSER</span></div>
+    <section className="workbench" id="workbench"><div className="work-title"><div><div className="section-kicker">THE PLAYGROUND</div><h2>{tab==='studio'?'Build your chog':'The remix shelf'}</h2></div><span className="autosave">● &nbsp;SESSION ONLY</span></div>
     {tab==='studio' ? <div className="editor"><div className="preview"><div className="preview-head"><span>LIVE PREVIEW <small>· 1:1 CANVAS</small></span><button className="icon-btn" title="Shuffle composition" onClick={randomize}>⤨</button></div><div className="canvas-wrap"><div className="canvas"><Chog remix={remix} id="art-preview"/></div><span className="canvas-note">A fresh little friend</span></div><div className="preview-foot"><span>CHOG REMIX <b>#{String(remix.id).slice(-4)}</b></span><button className="text-btn" onClick={download}>↓ &nbsp;Export PNG</button></div></div>
       <div className="controls"><div className="control-head"><div><span className="section-kicker">YOUR CREATION</span><h3>Make it yours</h3></div><button className="reset" onClick={()=>setRemix({...demoGallery[0],id:Date.now(),title:'Untitled chog'})}>Reset ↺</button></div>
         <div className="control-group"><div className="label-row"><label>Background</label><span>01 / COLOR</span></div><div className="swatches">{choices.bg.map(x=><button key={x.name} title={x.name} aria-label={x.name} className={`swatch ${remix.bg===x.value?'selected':''}`} style={{background:x.value}} onClick={()=>update('bg',x.value)}/>)}</div></div>

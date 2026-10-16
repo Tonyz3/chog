@@ -9,7 +9,7 @@ A small, browser based Chog PFP remix demo built for a competition walkthrough. 
 - Responsive dark creative studio with live composition preview.
 - Background, fur color, expression, and accessory controls; shuffle and reset actions.
 - Demo generation credits with duplicate-click protection provided by the single synchronous UI action.
-- Browser-local remix shelf and remix action.
+- Session-only remix shelf and remix action; one visual dimension changes with every generated variation.
 - PNG export at 1024 × 1024.
 - Persistent `DEMO MODE` labels and explicit simulated burn messaging.
 - Vercel configuration for Vite static output and SPA routing.
