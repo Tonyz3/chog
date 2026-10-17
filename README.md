@@ -1,66 +1,62 @@
 # Chog Remix Studio
 
-A small, browser based Chog PFP remix demo built for a competition walkthrough. It lets visitors change a character's palette, expression, and accessory, generate and save remixes locally, browse the remix shelf, and export a 1024 × 1024 PNG.
+A browser based studio for remixing **real Chog Genesis NFTs** on Monad. Choose artwork from the indexed collection, arrange complete NFT images on a square canvas, add backgrounds and text, save remixes in your browser, and export a 1024 × 1024 PNG.
 
-> **Demo build:** this repository contains sample, original vector artwork and simulated wallet, NFT access, credit, and burn states. It does not verify Chog ownership, connect to a blockchain, or burn an NFT. Do not treat the demo credits or sample gallery as production data.
+> The editor and export work without a wallet. Collection data is sourced from Monad contract metadata and IPFS. Wallet access is an optional read-only ERC-721 balance check. There are no credits, burns, simulated transactions, or claims of on-chain activity.
 
 ## Features
 
-- Responsive dark creative studio with live composition preview.
-- Background, fur color, expression, and accessory controls; shuffle and reset actions.
-- Demo generation credits with duplicate-click protection provided by the single synchronous UI action.
-- Session-only remix shelf and remix action; one visual dimension changes with every generated variation.
-- PNG export at 1024 × 1024.
-- Persistent `DEMO MODE` labels and explicit simulated burn messaging.
-- Vercel configuration for Vite static output and SPA routing.
+- Gallery of real Chog Genesis NFTs with token IDs, metadata traits, and marketplace links.
+- Collection manifest records discovery, metadata and image availability, failures, and inventory completeness; it does not mark an incomplete import complete.
+- Interactive canvas: add, move, resize, reorder, remove, rotate, and crop NFT image layers; set a background and add text.
+- Randomize compositions with actual collection assets.
+- Export the composition rendered on the canvas as a high-resolution PNG.
+- Save, revisit, remove, and remix compositions in local browser storage.
+- Optional wallet connection that checks the account’s standard ERC-721 balance on Monad mainnet.
+- Responsive desktop and mobile layouts; gallery and editor work without connecting a wallet.
 
-## Screenshots
+## Collection source and access model
 
-Replace this designed placeholder with a judge-facing studio capture after running the app. Suggested follow-up files: `docs/screenshots/gallery.png` and `docs/screenshots/mobile.png`.
+Chog’s official links point to the Chog Genesis OpenSea collection. The collection identifies the Monad ERC-721 contract as `0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763`. The import script verifies Monad chain ID 143, contract bytecode, and on-chain `totalSupply()`, then checks `ownerOf()` and retrieves `tokenURI()` for every enumerated token ID. It resolves metadata and original images from IPFS, preserves raw metadata and traits, and records per-token failures. See [Chog](https://www.chog.xyz/), [official collection](https://opensea.io/collection/chog-genesis), and [Monad network](https://docs.monad.xyz/).
 
-![Studio screenshot placeholder](docs/screenshots/studio-placeholder.svg)
+The app displays source and import counts from `public/data/chog-genesis.json`. It reports a complete inventory only after every enumerated ID has an owner, unique metadata, and a reachable image. The editor uses complete source NFT images; it does not claim to have separate transparent trait layers.
+
+The optional wallet check asks the browser wallet for an account, switches to chain 143, then reads `balanceOf(account)` from the verified collection contract. A positive balance only indicates current holder access. It grants no generation credits and sends no transaction. No burn-to-earn flow is implemented because burn semantics have not been established.
 
 ## Architecture
 
-- `src/studio.tsx` contains the UI, sample vector character, editor state, demo credit actions, local gallery, and PNG export.
-- `src/style.css` contains the responsive visual system.
-- `src/main.tsx` mounts the React application.
-- `vite.config.ts` and `vercel.json` configure the Vite build and Vercel SPA routing.
-
-The character is rendered as inline SVG and rasterized client-side through a canvas for export. Demo creations are held in React state for the current page session; this MVP does not yet persist them across reloads. No backend is included.
-
-## Chog access and generation credits
-
-The intended product model is for a wallet to prove that it owns at least one NFT from the verified Chog collection. A successful, server or chain verified ownership check would grant a configurable standard generation credit without burning the NFT. A separate burn reward could grant five credits only after the real collection's burn support, contract, network, transaction result, and replay protection have been verified.
-
-None of those on-chain steps are implemented in this demo. “Connect wallet” only toggles a sample connected state; collection access and the “Demo burn +5” action are simulations. The burn button sends no transaction and consumes no NFT. The included sample character is an original vector illustration and is not represented as official Chog collection art. Before production use, identify and verify the official network, contract, standard, inventory, metadata source, and burn semantics; then implement wallet reads and a secure credit ledger. Do not enable burning based on the demo UI.
+- `src/studio.tsx`: React app, collection loading, image gallery, canvas compositor, local save shelf, PNG export, and optional read-only wallet check.
+- `src/style.css`: responsive studio and editor styles.
+- `scripts/import-chog-genesis.mjs`: checks Monad and the contract, enumerates token IDs, retrieves and normalizes metadata, tests original image URLs, resumes from cached manifest entries, and writes the inventory manifest.
+- `public/data/chog-genesis.json`: generated normalized manifest and source metadata.
+- `src/main.tsx`: app entry point; `vercel.json` configures Vite output and SPA routing.
 
 ## Technology
 
-- React 19, TypeScript, Vite 7
-- Inline SVG and browser Canvas APIs
-- Plain CSS; no wallet or backend dependencies
+React 19, TypeScript, Vite 7, browser Canvas and wallet provider APIs, Node.js built-in `fetch` for the collection importer. No backend is required for editing, saving locally, or exporting.
 
 ## Local setup
 
-Requirements: Node.js 20.19+ or 22.12+ and npm.
+Requirements: Node.js 20.19+ or 22.12+, and npm.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The demo works without a wallet or environment configuration.
+Open the local URL printed by Vite. The checked-in manifest lets the editor run without a wallet or environment variables.
 
-## Environment variables
+## Refresh collection data
 
-Copy `.env.example` to `.env.local` only when configuring a future integration. All `VITE_` values are exposed to browser code and must be public values; never put private keys, seed phrases, service role keys, or other secrets there. The current demo does not read these variables.
+```sh
+npm run import:collection
+```
 
-| Variable | Purpose | Current demo |
-| --- | --- | --- |
-| `VITE_PUBLIC_RPC_URL` | Optional public RPC endpoint after network verification | Unused |
-| `VITE_CHOG_COLLECTION_ADDRESS` | Collection contract address after verification | Unused |
-| `VITE_API_BASE_URL` | Future backend endpoint for verified credits and persistent gallery | Unused |
+The importer uses Monad mainnet’s public RPC by default and public IPFS gateways. Optionally set `MONAD_RPC_URL`, `IMPORT_CONCURRENCY` (1–12), and `IMPORT_DELAY_MS` for a private or rate-limited RPC. Existing token metadata is reused when its on-chain `tokenURI` is unchanged, while image URLs are rechecked. The command prints discovered, metadata loaded, images reachable, failures, and unique token counts. It exits unsuccessfully when the full supply has not been verified and ingested.
+
+## Environment variables and secrets
+
+The web app has no required secrets. Browser wallet access is provided by the user’s wallet. The importer’s `MONAD_RPC_URL` is a machine-side public endpoint setting and is not bundled into the frontend. `.env.example` is documentation only. Never place private keys, seed phrases, wallet credentials, or server secrets in `VITE_` variables; Vite publishes those values to the browser. `.env` files are ignored by Git.
 
 ## Build and checks
 
@@ -69,41 +65,22 @@ npm run build
 npm run preview
 ```
 
-`npm run build` runs TypeScript checking and creates the production bundle in `dist/`. This starter does not include a unit-test or lint command yet. Manually verify the palette, expression, accessory, shuffle, generate, demo burn, gallery remix, and PNG download actions in a browser before presenting it.
+`npm run build` runs TypeScript project checks and creates the static site in `dist/`. No automated unit-test or lint script is currently included. Check the gallery, image selection, layer editing, randomize, local save/remix, and PNG download in a browser before a competition presentation.
 
 ## Vercel deployment
 
-1. Push the project to a GitHub repository.
-2. In Vercel, choose **Add New → Project**, import `chog-remix-studio`, and use the Vite defaults. The included `vercel.json` sets `npm run build`, `dist`, and SPA rewrites.
-3. No environment variables are required for the demo. Deploy, then open the assigned URL and confirm the editor and PNG export work.
+The included `vercel.json` configures Vite’s `npm run build`, `dist` output, and SPA rewrites. Import the GitHub repository into Vercel, keep those build defaults, and deploy. No environment variables are needed for editor or demo mode. Confirm the deployed URL and try gallery loading and PNG export after deployment. Set a public RPC variable only if a future frontend implementation explicitly needs one; never deploy secrets to browser variables.
 
-Alternatively, with an authenticated Vercel CLI, run `vercel` to link the project and `vercel --prod` to deploy. A deployment is live only after Vercel reports success and the resulting URL loads.
+## Limitations
 
-## GitHub publishing
+- IPFS image availability and browser reachability depend on external gateways; the app provides fallback gateways, but external outages can affect images.
+- Saved compositions live in this browser’s local storage and are not shared or synced.
+- The wallet check is read-only and is not a durable authorization or credit ledger.
+- Burn transactions, generation credits, persistent user accounts, and community activity are not implemented.
+- Screenshots can be added after capturing the app with the imported collection data.
 
-This directory was initially empty and had no Git repository or remote. Initialize and commit locally with:
+## Screenshots
 
-```sh
-git init -b main
-git add .
-git status --short
-git commit -m "Build Chog Remix Studio demo"
-```
+Screenshots: add a real studio capture here when available. No placeholder artwork is used.
 
-After GitHub authentication is available, create a **public** repository named `chog-remix-studio` in your account, then connect and push:
-
-```sh
-git remote add origin https://github.com/YOUR-USERNAME/chog-remix-studio.git
-git push -u origin main
-```
-
-Review `git status` and the staged file list before publishing. `.env*` files are ignored except `.env.example`; build outputs, dependencies, and Vercel local state are also ignored. No license is included because no license or ownership terms were selected.
-
-## Known demo limitations
-
-- No verified Chog collection contract, chain, token inventory, metadata, or official artwork catalogue is configured.
-- Wallet connection, ownership, balances, and burn actions are simulated.
-- Credits and gallery are in-memory UI state, not a secure or persistent ledger.
-- Gallery entries are local demo examples, not community submissions.
-- No backend, public gallery persistence, authentication, or real transaction support is included.
-- External Google Fonts are optional; system sans-serif fonts remain as fallback when offline.
+No license is included because project ownership and reuse terms have not been selected.
